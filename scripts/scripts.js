@@ -1,6 +1,3 @@
-//Couldn't manage the await functions well due to time constriction i need to work on the twitter project
-//Please play slowly and the game should work properly
-//the game will glitcgh out while pressing quickly
 
 const cards = document.querySelectorAll(".temp")
 const scoreH1 = document.getElementById("score")
@@ -8,7 +5,7 @@ const cardDivs = document.querySelectorAll(".card")
 const array = [0,1,2,3,4,5]
 let solved = 0
 let score = 0
-
+let canPlay = 1
 
 // functions
 
@@ -45,6 +42,7 @@ const removeDisplayNone = async () => { // returns all cards back into display
 }
 
 const boardReset = async () => { // resets the board after a win
+    canPlay=0
     await delay(500)
     score++
     scoreH1.innerHTML = `Score: ${score}`
@@ -53,41 +51,46 @@ const boardReset = async () => { // resets the board after a win
     removeDisplayNone()
     await delay(3000)
     flip()
+    canPlay=1
 }
 
-const events = async () => { // adds event listeners 
+const checkCards = async (i) => {
+    for (let j of cardDivs) {
+        if (i != j && j.classList.contains("is-flipped")) {// checks for other flipped cards
+            let flag = 0
+            for (let x = 0; x < 3; x++) { // checks if their faces are of the same type
+                if (j.lastElementChild.classList.contains(`card-${x}`) && i.lastElementChild.classList.contains(`card-${x}`)) { // 
+                    await delay(200)
+                    i.classList.add("display-none")
+                    j.classList.add("display-none")
+                    i.classList.remove("is-flipped")
+                    j.classList.remove("is-flipped")
+                    j.lastElementChild.classList.remove(`card-${x}`)
+                    i.lastElementChild.classList.remove(`card-${x}`)
+                    solved++
+                    if (solved == 3) { // checks if all cards are matched
+                        boardReset()
+                    }
+                    flag = 1
+                }
+            }
+            if (flag == 0) {// removes 1 from score if they weren't the same and reflips them
+                await delay(200)
+                i.classList.remove("is-flipped")
+                j.classList.remove("is-flipped")
+                score--
+                scoreH1.innerHTML = `Score: ${score}`
+            }
+        }
+    }
+}
+
+const events = async () => { // adds event listeners to the cards
     for (const i of cardDivs) {
         i.addEventListener('click', async () => {
-            if (!i.classList.contains("display-none")) { // allows only visible cars to be pressed
+            if (!i.classList.contains("display-none") && canPlay) { // allows only visible cars to be pressed
                 i.classList.toggle("is-flipped")
-                for (const j of cardDivs) {
-                    if (i != j && j.classList.contains("is-flipped")) {// checks for other flipped cards
-                        let flag = 0
-                        for (let x = 0; x < 3; x++) { // checks if they are of the same type
-                            if (j.lastElementChild.classList.contains(`card-${x}`) && i.lastElementChild.classList.contains(`card-${x}`)) {
-                                await delay(500)
-                                i.classList.add("display-none")
-                                j.classList.add("display-none")
-                                i.classList.remove("is-flipped")
-                                j.classList.remove("is-flipped")
-                                j.lastElementChild.classList.remove(`card-${x}`)
-                                i.lastElementChild.classList.remove(`card-${x}`)
-                                solved++
-                                if (solved == 3) { // checks if all cards are matched
-                                    boardReset()
-                                }
-                                flag = 1
-                            }
-                        }
-                        if (flag == 0) {// removes 1 from score if they weren't the same and reflips them
-                            await delay(500)
-                            i.classList.remove("is-flipped")
-                            j.classList.remove("is-flipped")
-                            score--
-                            scoreH1.innerHTML = `Score: ${score}`
-                        }
-                    }
-                }
+                checkCards(i)
             }
         })
     }
